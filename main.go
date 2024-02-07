@@ -37,11 +37,18 @@ const (
 	Addr = ":8081"
 )
 
+// response message type
 type ResponseMsg string
 
 const (
 	ResponseOK ResponseMsg = "OK"
 )
+
+// dto
+type Response struct {
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
 
 type ContactsResponse struct {
 	Message ResponseMsg `json:"message"`
