@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	gmux "github.com/gorilla/mux"
@@ -45,6 +46,11 @@ const (
 type ContactsResponse struct {
 	Message ResponseMsg `json:"message"`
 	Data    []Contact   `json:"data"`
+}
+
+type ContactResponse struct {
+	Message ResponseMsg `json:"message"`
+	Data    Contact     `json:"data"`
 }
 
 type CreateContactResponse struct {
@@ -121,6 +127,47 @@ func main() {
 
 		json.NewEncoder(w).Encode(res)
 	}).Methods(http.MethodPost)
+
+	// GET a single contact by id
+	mux.HandleFunc("/contacts/{id}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		vars := gmux.Vars(r)
+		userId := vars["id"]
+
+		userIdInt, err := strconv.Atoi(userId)
+		if err != nil {
+			errorResponse := ErrorResponse{
+				Error: "invalid id",
+			}
+			json.NewEncoder(w).Encode(errorResponse)
+			return
+		}
+
+		for _, user := range contacts {
+			if user.ID == userIdInt {
+				res := ContactResponse{
+					Data:    user,
+					Message: ResponseOK,
+				}
+
+				err = json.NewEncoder(w).Encode(res)
+				if err != nil {
+					fmt.Fprintf(w, "error: %s", err.Error())
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+		}
+
+		errorResponse := ErrorResponse{
+			Error: "data not found",
+		}
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(errorResponse)
+	}).Methods(http.MethodGet)
 
 	srv := http.Server{
 		Addr:        Addr,
