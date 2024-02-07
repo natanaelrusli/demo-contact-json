@@ -56,9 +56,21 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+func MethodNotAllowedHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		errorResponse := ErrorResponse{
+			Error: "method not allowed",
+		}
+
+		json.NewEncoder(w).Encode(errorResponse)
+	})
+}
+
 func main() {
 	// start coding here...
 	mux := gmux.NewRouter()
+	mux.MethodNotAllowedHandler = MethodNotAllowedHandler()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "hello!")
